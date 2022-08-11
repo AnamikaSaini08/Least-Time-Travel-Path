@@ -1,15 +1,22 @@
 onload = function () {
+    //curr_data will contain question
     let curr_data,V,src,dst;
 
+    //question graph
     const container = document.getElementById('mynetwork');
+    //ans graph
     const container2 = document.getElementById('mynetwork2');
+    //on click get new problem
     const genNew = document.getElementById('generate-graph');
+    //on click solve
     const solve = document.getElementById('solve');
+    //from(place 1)
     const temptext = document.getElementById('temptext');
+    //to(place 2)
     const temptext2 = document.getElementById('temptext2');
     const cities = ['Delhi', 'Mumbai', 'Gujarat', 'Goa', 'Kanpur', 'Jammu', 'Hyderabad', 'Bangalore', 'Gangtok', 'Meghalaya'];
 
-    // initialise graph options
+    // initialise graph options according to documentation of library
     const options = {
         edges: {
             labelHighlightBold: true,
@@ -41,9 +48,11 @@ onload = function () {
     network2.setOptions(options);
 
     function createData(){
+        //creating random number of nodes.
         V = Math.floor(Math.random() * 8) + 3; // Ensures V is between 3 and 10
         let nodes = [];
         for(let i=1;i<=V;i++){
+            //a/c to documentation
             nodes.push({id:i, label: cities[i-1]})
         }
         // Prepares vis.js style nodes for our data
@@ -52,13 +61,15 @@ onload = function () {
         // Creating a tree like underlying graph structure
         let edges = [];
         for(let i=2;i<=V;i++){
+            //take random number from i-1 to 3
             let neigh = i - Math.floor(Math.random()*Math.min(i-1,3)+1); // Picks a neighbour from i-3 to i-1
+            //a/c to documentation
             edges.push({type: 0, from: i, to: neigh, color: 'orange',label: String(Math.floor(Math.random()*70)+31)});
         }
 
-        
+        //adding edges dynamically and overall connected
         for(let i=1;i<=V/2;){
-
+            //randomly take two nodes
             let n1 = Math.floor(Math.random()*V)+1;
             let n2 = Math.floor(Math.random()*V)+1;
             if(n1!==n2){
@@ -67,6 +78,7 @@ onload = function () {
                     n1 = n2;
                     n2 = tmp;
                 }
+                //if no edge between these two variable then works = 0 , if one edge of type 0 then value 1 , edge type 1 then value is 2
                 let works = 0;
                 for(let j=0;j<edges.length;j++){
                     if(edges[j]['from']===n1 && edges[j]['to']===n2) {
@@ -76,7 +88,7 @@ onload = function () {
                             works = 2;
                     }
                 }
-
+                //adding an edge
                 if(works <= 1) {
                     if (works === 0 && i < V / 4) {
                         // Adding a bus
@@ -127,6 +139,7 @@ onload = function () {
         temptext.style.display  = "none";
         temptext2.style.display  = "none";
         container2.style.display = "inline";
+        //data will return and then print
         network2.setData(solveData());
     };
 
@@ -176,20 +189,30 @@ onload = function () {
     }
 
     function shouldTakePlane(edges, dist1, dist2, mn_dist) {
+        //act as boolean like if 0  then not take the plane else take weight of plane
         let plane = 0;
         let p1=-1, p2=-1;
         for(let pos in edges){
             let edge = edges[pos];
+            //type 0 = Bus , type 1 = Plane 
             if(edge['type']===1){
+                //u , v , w
                 let to = edge['to']-1;
                 let from = edge['from']-1;
                 let wght = parseInt(edge['label']);
+                
+                //plane can be take from either side bcz of bidirectional
+                //dist1(Dija from source) and dist2(from destination) are two array from dijakstra'
+                //min_dist -> distance via bus from src to dst
+                
+                //forward plane
                 if(dist1[to][0]+wght+dist2[from][0] < mn_dist){
                     plane = wght;
                     p1 = to;
                     p2 = from;
                     mn_dist = dist1[to][0]+wght+dist2[from][0];
                 }
+                //backward plane
                 if(dist2[to][0]+wght+dist1[from][0] < mn_dist){
                     plane = wght;
                     p2 = to;
@@ -212,14 +235,19 @@ onload = function () {
         let dist1 = djikstra(graph,V,src-1);
         let dist2 = djikstra(graph,V,dst-1);
 
-        // Initialise min_dist to min distance via bus from src to dst
+        // Initialise min_dist to min distance via bus from src to dst 
+        //dist[distance][parent]
+        
         let mn_dist = dist1[dst-1][0];
 
         // See if plane should be used
         let {plane, p1, p2} = shouldTakePlane(data['edges'], dist1, dist2, mn_dist);
 
+        //create result on seperate graph
         let new_edges = [];
+        //we take plane
         if(plane!==0){
+            //add new edge(  from: p1+1, to: p2+1 )
             new_edges.push({arrows: { to: { enabled: true}}, from: p1+1, to: p2+1, color: 'green',label: String(plane)});
             // Using spread operator to push elements of result of pushEdges to new_edges
             new_edges.push(...pushEdges(dist1, p1, false));
@@ -227,6 +255,7 @@ onload = function () {
         } else{
             new_edges.push(...pushEdges(dist1, dst-1, false));
         }
+        //as in library
         const ans_data = {
             nodes: data['nodes'],
             edges: new_edges
@@ -234,8 +263,10 @@ onload = function () {
         return ans_data;
     }
 
+    //reverse act as add from u-v and v-u
     function pushEdges(dist, curr, reverse) {
         let tmp_edges = [];
+        //stop when we reach to parent
         while(dist[curr][0]!==0){
             let fm = dist[curr][1];
             if(reverse)
