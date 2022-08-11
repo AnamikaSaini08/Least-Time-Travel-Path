@@ -1,5 +1,7 @@
 function createGraph(V,E){
     let adj_list = []; 
+    
+    //for each list append empty list
     for(let i = 0 ; i < V ; i++){
         adj_list.push([]);
     }
@@ -11,6 +13,7 @@ function createGraph(V,E){
 }
 
 let V = 3;
+//u , v , weight
 let E = [[0,1,1],[0,2,2],[1,2,3]];
 let graph = createGraph(V,E);
 console.log(graph);
